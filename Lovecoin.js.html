@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Miner - Earn & Withdraw</title>
+    <style>
+        :root {
+            --color-bg-base: #111827;
+            --color-bg-elevated: #1e2a3a;
+            --color-bg-surface: #1f2d3d;
+            --color-bg-card: #2a3a4e;
+            --color-text-primary: #f0f6ff;
+            --color-text-secondary: #a8c0d6;
+            --color-text-muted: #6b8aaa;
+            --color-primary: #38bdf8;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-purple: #a855f7;
+            --color-cyan: #06b6d4;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0d1b2a 0%, #1a2a3a 100%);
+            color: var(--color-text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container { max-width: 100%; padding: 20px; padding-bottom: 100px; }
+
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, rgba(56,189,248,0.12), rgba(168,85,247,0.12));
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(56,189,248,0.25);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #38bdf8, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .balance-section {
+            background: var(--color-bg-surface);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(56,189,248,0.25);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .balance-label { font-size: 13px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+
+        .balance-amount {
+            font-size: 42px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #38bdf8, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .balance-usd { font-size: 16px; color: var(--color-text-secondary); }
+
+        .mining-section {
+            background: var(--color-bg-surface);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(168,85,247,0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 4D Fractal Canvas Container */
+        .fractal-visual {
+            width: 100%;
+            max-width: 340px;
+            margin: 0 auto 15px;
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(56,189,248,0.3);
+            box-shadow: 0 0 30px rgba(56,189,248,0.2), 0 0 60px rgba(168,85,247,0.1);
+        }
+
+        #fractalCanvas {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 16px;
+        }
+
+        .fractal-overlay-label {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(56,189,248,0.4);
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 11px;
+            font-family: monospace;
+            color: #38bdf8;
+            white-space: nowrap;
+            backdrop-filter: blur(4px);
+        }
+
+        .fractal-mode-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: monospace;
+        }
+        .mode-mandelbulb { background: rgba(245,158,11,0.25); border: 1px solid #f59e0b; color: #f59e0b; }
+        .mode-julia { background: rgba(168,85,247,0.25); border: 1px solid #a855f7; color: #a855f7; }
+
+        .mining-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 14px;
+            background: var(--color-bg-card);
+            border-radius: 12px;
+            border: 1px solid rgba(56,189,248,0.1);
+        }
+
+        .stat-label { font-size: 11px; color: var(--color-text-muted); text-transform: uppercase; margin-bottom: 5px; }
+        .stat-value { font-size: 18px; font-weight: 600; color: var(--color-primary); font-family: monospace; }
+
+        /* Quantum stats row */
+        .quantum-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .q-stat {
+            text-align: center;
+            padding: 8px;
+            background: rgba(56,189,248,0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(56,189,248,0.15);
+        }
+
+        .q-stat-label { font-size: 9px; color: var(--color-text-muted); text-transform: uppercase; margin-bottom: 3px; }
+        .q-stat-value { font-size: 13px; font-weight: 600; color: #38bdf8; font-family: monospace; }
+
+        .mining-btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .mining-btn.active { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .mining-btn.inactive { background: linear-gradient(135deg, #38bdf8, #0284c7); color: #0d1b2a; }
+        .mining-btn:active { transform: scale(0.98); }
+
+        /* Daily Tasks */
+        .tasks-section {
+            background: var(--color-bg-surface);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(245,158,11,0.25);
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px;
+            background: var(--color-bg-card);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s;
+        }
+
+        .task-item.completed { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.05); }
+
+        .task-info { flex: 1; }
+        .task-name { font-size: 14px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 3px; }
+        .task-reward { font-size: 12px; color: var(--color-success); }
+        .task-timer { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; font-family: monospace; }
+
+        .task-btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .task-btn.claimable { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .task-btn.claimed { background: rgba(16,185,129,0.2); color: #10b981; cursor: default; border: 1px solid rgba(16,185,129,0.3); }
+        .task-btn.locked { background: rgba(100,116,139,0.2); color: var(--color-text-muted); cursor: not-allowed; border: 1px solid rgba(100,116,139,0.2); }
+
+        .wallet-section {
+            background: var(--color-bg-surface);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(16,185,129,0.2);
+        }
+
+        .wallet-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: var(--color-bg-card);
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .wallet-info { flex: 1; }
+        .wallet-label { font-size: 12px; color: var(--color-text-muted); margin-bottom: 5px; }
+        .wallet-address { font-size: 14px; font-family: monospace; color: var(--color-success); word-break: break-all; }
+
+        .connect-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .connect-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16,185,129,0.4); }
+
+        .disconnect-btn {
+            padding: 8px 16px;
+            background: rgba(239,68,68,0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .withdraw-section { display: grid; gap: 15px; }
+
+        .input-group { display: flex; gap: 10px; }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px 15px;
+            background: var(--color-bg-card);
+            border: 1px solid rgba(56,189,248,0.3);
+            border-radius: 8px;
+            color: var(--color-text-primary);
+            font-size: 14px;
+        }
+
+        .input-group input:focus { outline: none; border-color: var(--color-primary); }
+
+        .max-btn {
+            padding: 12px 20px;
+            background: rgba(56,189,248,0.15);
+            color: var(--color-primary);
+            border: 1px solid var(--color-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .withdraw-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #38bdf8, #0284c7);
+            color: #0d1b2a;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .withdraw-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .payment-method-btn {
+            width: 100%;
+            padding: 15px;
+            background: var(--color-bg-card);
+            border: 1px solid rgba(56,189,248,0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .payment-method-btn:hover { background: rgba(56,189,248,0.08); border-color: var(--color-primary); transform: translateX(4px); }
+
+        .payment-method-content { display: flex; justify-content: space-between; align-items: center; }
+        .payment-method-name { font-size: 14px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 4px; }
+        .payment-method-desc { font-size: 12px; color: var(--color-text-muted); }
+
+        .donation-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(168,85,247,0.15), rgba(56,189,248,0.15));
+            border: 1px solid var(--color-purple);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .donation-btn:hover { background: linear-gradient(135deg, rgba(168,85,247,0.25), rgba(56,189,248,0.25)); transform: translateY(-2px); }
+
+        .donation-amount-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--color-bg-base);
+            border: 1px solid rgba(168,85,247,0.3);
+            border-radius: 8px;
+            color: var(--color-text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .donation-amount-btn:hover { background: rgba(168,85,247,0.15); border-color: var(--color-purple); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show { display: flex; }
+
+        .modal-content {
+            background: var(--color-bg-surface);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            border: 1px solid rgba(56,189,248,0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 20px; font-weight: 600; }
+
+        .modal-close {
+            background: none; border: none;
+            font-size: 28px; color: var(--color-text-muted);
+            cursor: pointer; padding: 0; width: 30px; height: 30px;
+        }
+
+        .modal-close:hover { color: var(--color-text-primary); }
+        .modal-body { margin-bottom: 20px; }
+
+        .form-field { margin-bottom: 15px; }
+        .form-field label { display: block; font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px; }
+        .form-field input, .form-field select {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--color-bg-card);
+            border: 1px solid rgba(56,189,248,0.3);
+            border-radius: 8px;
+            color: var(--color-text-primary);
+            font-size: 14px;
+        }
+
+        .form-field input:focus, .form-field select:focus { outline: none; border-color: var(--color-primary); }
+
+        .info-box { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 12px; margin-bottom: 15px; }
+        .info-box p { font-size: 12px; color: var(--color-text-secondary); margin: 0; }
+
+        .warning-box { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 12px; margin-bottom: 15px; }
+        .warning-box p { font-size: 12px; color: var(--color-warning); margin: 0; }
+
+        .history-section {
+            background: var(--color-bg-surface);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(56,189,248,0.15);
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--color-bg-card);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--color-success);
+        }
+
+        .history-type { font-size: 13px; color: var(--color-text-muted); }
+        .history-amount { font-size: 16px; font-weight: 600; color: var(--color-success); font-family: monospace; }
+        .history-date { font-size: 11px; color: var(--color-text-muted); margin-top: 3px; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--color-text-muted); }
+
+        h2 { font-size: 18px; margin-bottom: 15px; color: var(--color-text-primary); }
+
+        .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; }
+
+        .particle {
+            position: absolute;
+            width: 2px; height: 2px;
+            background: #38bdf8;
+            border-radius: 50%;
+            opacity: 0.2;
+            animation: float 12s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            50% { transform: translateY(-80px) translateX(30px); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px; right: 20px;
+            background: var(--color-bg-surface);
+            padding: 15px 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--color-success);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            transform: translateX(420px);
+            transition: transform 0.3s;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .notification.show { transform: translateX(0); }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <!-- 18+ Warning -->
+        <div style="background:rgba(239,68,68,0.08);border:2px solid #ef4444;border-radius:16px;padding:20px;margin-bottom:20px;text-align:center;">
+            <p style="font-size:18px;font-weight:600;color:#ef4444;margin-bottom:8px;">⚠️ 18+ WARNING</p>
+            <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:12px;">This app involves cryptocurrency earnings and gambling-like mechanics. For entertainment purposes only.</p>
+            <p style="font-size:12px;color:var(--color-text-muted);margin:0;"><strong>GambleAware:</strong> If you feel you may have a gambling problem, seek help at <a href="https://www.begambleaware.org" target="_blank" style="color:var(--color-primary);">BeGambleAware.org</a> | Must be 18 or older to use</p>
+        </div>
+
+        <div class="header">
+            <h1>⛏️ Crypto Miner</h1>
+            <p style="font-size:13px;color:var(--color-text-secondary);">4D Fractal-Powered Cloud Mining</p>
+        </div>
+
+        <div class="balance-section">
+            <div class="balance-label">Your Balance</div>
+            <div class="balance-amount" id="totalBalance">0.00000000</div>
+            <div class="balance-usd" id="balanceUsd">≈ $0.00 USD</div>
+        </div>
+
+        <!-- Mining Section with 4D Fractal Canvas -->
+        <div class="mining-section">
+            <div class="fractal-visual">
+                <canvas id="fractalCanvas" width="320" height="320"></canvas>
+                <div class="fractal-overlay-label" id="fractalLabel">⬡ Awaiting quantum ignition...</div>
+                <div class="fractal-mode-badge mode-mandelbulb" id="fractalModeBadge" style="display:none;">MANDELBULB</div>
+            </div>
+
+            <div class="mining-stats">
+                <div class="stat-item">
+                    <div class="stat-label">Hash Rate</div>
+                    <div class="stat-value" id="hashRate">0 MH/s</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Earned Today</div>
+                    <div class="stat-value" id="earnedToday">0.00000000</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Mining Time</div>
+                    <div class="stat-value" id="miningTime">00:00:00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Total Earned</div>
+                    <div class="stat-value" id="totalEarned">0.00000000</div>
+                </div>
+            </div>
+
+            <!-- Quantum Parameters (live from fractal) -->
+            <div class="quantum-stats">
+                <div class="q-stat">
+                    <div class="q-stat-label">Entanglement</div>
+                    <div class="q-stat-value" id="qEntanglement">0.920</div>
+                </div>
+                <div class="q-stat">
+                    <div class="q-stat-label">Error Rate</div>
+                    <div class="q-stat-value" id="qError">0.0180</div>
+                </div>
+                <div class="q-stat">
+                    <div class="q-stat-label">Fractal Cycle</div>
+                    <div class="q-stat-value" id="qCycle">0</div>
+                </div>
+            </div>
+
+            <button class="mining-btn inactive" id="miningBtn">Start Mining</button>
+        </div>
+
+        <!-- Daily Tasks -->
+        <div class="tasks-section">
+            <h2>🎯 Daily Tasks</h2>
+            <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:15px;">Complete tasks to earn bonus BTC rewards every 24 hours!</p>
+            <div id="tasksList"></div>
+        </div>
+
+        <!-- Wallet & Withdrawals -->
+        <div class="wallet-section">
+            <h2>💰 Withdrawal & Donations</h2>
+
+            <div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);border-radius:12px;padding:15px;margin-bottom:20px;">
+                <p style="font-size:13px;color:var(--color-text-secondary);margin:0;"><strong>💡 Choose Your Method:</strong> Connect wallet for instant withdrawals, or use payment services for verified transactions</p>
+            </div>
+
+            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:12px;padding:15px;margin-bottom:20px;">
+                <p style="font-size:14px;font-weight:600;color:var(--color-success);margin-bottom:8px;">🤝 Community Pool Integration</p>
+                <p style="font-size:12px;color:var(--color-text-secondary);margin:0;">Join our mining pool community! Connect with other miners, share strategies, and collaborate on earnings. Pool members can chat, exchange tips, and participate in group mining sessions for bonus rewards.</p>
+            </div>
+
+            <div class="wallet-status" id="walletStatus">
+                <div class="wallet-info">
+                    <div class="wallet-label">Wallet Status</div>
+                    <div class="wallet-address" id="walletAddress">Not Connected</div>
+                </div>
+                <button class="connect-btn" id="connectBtn">Connect Wallet</button>
+            </div>
+
+            <div class="withdraw-section" id="withdrawSection" style="display:none;">
+                <div class="input-group">
+                    <input type="number" id="withdrawAmount" placeholder="0.00000000" step="0.00000001">
+                    <button class="max-btn" id="maxBtn">MAX</button>
+                </div>
+                <button class="withdraw-btn" id="withdrawBtn">Withdraw to Trust Wallet</button>
+            </div>
+
+            <div style="margin-top:25px;padding-top:25px;border-top:1px solid rgba(255,255,255,0.05);">
+                <h3 style="font-size:16px;margin-bottom:15px;color:var(--color-text-secondary);">🔐 Alternative Withdrawal Methods</h3>
+                <div style="display:grid;gap:12px;">
+                    <button class="payment-method-btn" id="nowpaymentsBtn">
+                        <div class="payment-method-content">
+                            <div><div class="payment-method-name">NOWPayments</div><div class="payment-method-desc">200+ cryptocurrencies • Instant payout</div></div>
+                            <span style="font-size:20px;">🚀</span>
+                        </div>
+                    </button>
+                    <button class="payment-method-btn" id="coinbaseBtn">
+                        <div class="payment-method-content">
+                            <div><div class="payment-method-name">Coinbase Commerce</div><div class="payment-method-desc">BTC, ETH, USDC • Verified transactions</div></div>
+                            <span style="font-size:20px;">🏦</span>
+                        </div>
+                    </button>
+                    <button class="payment-method-btn" id="walletconnectBtn">
+                        <div class="payment-method-content">
+                            <div><div class="payment-method-name">WalletConnect Protocol</div><div class="payment-method-desc">Connect any Web3 wallet securely</div></div>
+                            <span style="font-size:20px;">🔗</span>
+                        </div>
+                    </button>
+                    <button class="payment-method-btn" id="customAddressBtn">
+                        <div class="payment-method-content">
+                            <div><div class="payment-method-name">Custom Wallet Address</div><div class="payment-method-desc">Withdraw to any BTC/ETH address</div></div>
+                            <span style="font-size:20px;">📬</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support / Donate -->
+        <div class="wallet-section">
+            <h2>❤️ Support Development</h2>
+            <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:8px;">Help us improve this app! Your donations fund new features, better mining algorithms, and faster payouts.</p>
+            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:12px;margin-bottom:15px;">
+                <p style="font-size:11px;color:var(--color-warning);margin:0;">⚠️ <strong>Disclaimer:</strong> Earnings shown are simulated for demonstration. Real crypto mining requires specialized hardware and significant investment. Always research before investing in cryptocurrency.</p>
+            </div>
+            <div style="display:grid;gap:12px;">
+                <button class="donation-btn" id="donateBtn">
+                    <div class="payment-method-content">
+                        <div><div class="payment-method-name">💝 Donate via Crypto</div><div class="payment-method-desc">Support app improvements</div></div>
+                        <span style="font-size:20px;">→</span>
+                    </div>
+                </button>
+                <div id="donationOptions" style="display:none;padding:15px;background:var(--color-bg-card);border-radius:12px;margin-top:10px;">
+                    <div style="display:grid;gap:10px;">
+                        <button class="donation-amount-btn" data-amount="0.0001">Donate 0.0001 BTC (~$6.50)</button>
+                        <button class="donation-amount-btn" data-amount="0.0005">Donate 0.0005 BTC (~$32.50)</button>
+                        <button class="donation-amount-btn" data-amount="0.001">Donate 0.001 BTC (~$65)</button>
+                        <button class="donation-amount-btn" id="customDonationBtn">Custom Amount</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="history-section">
+            <h2>📊 Transaction History</h2>
+            <div id="historyList">
+                <div class="empty-state"><p>No transactions yet. Start mining to earn crypto!</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <div id="notificationText"></div>
+    </div>
+
+    <div class="modal" id="withdrawalModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Withdrawal Method</div>
+                <button class="modal-close" onclick="miner.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+    // ─── 4D FRACTAL ENGINE ──────────────────────────────────────────────────────
+    class FractalEngine {
+        constructor(canvasId) {
+            this.canvas = document.getElementById(canvasId);
+            this.ctx = this.canvas.getContext('2d');
+            this.W = this.canvas.width;
+            this.H = this.canvas.height;
+            this.cycleCount = 0;
+            this.isActive = false;
+            this.animFrameId = null;
+            this.power = 8.0;
+            this.maxIter = 28;
+            this.bailout = 4.0;
+            this.mu = [-0.15, 0.75, 0.05, 0.10];
+            this.onCycle = null; // callback
+            this.drawIdle();
+        }
+
+        get entanglement() { return Math.min(1, (0.92 + 0.08 * (this.cycleCount % 6)) ); }
+        get errorRate()     { return Math.max(0.001, 0.018 - 0.0005 * this.cycleCount); }
+
+        drawIdle() {
+            const ctx = this.ctx;
+            ctx.fillStyle = '#020617';
+            ctx.fillRect(0, 0, this.W, this.H);
+            ctx.save();
+            ctx.globalAlpha = 0.35;
+            const grad = ctx.createRadialGradient(this.W/2, this.H/2, 10, this.W/2, this.H/2, 130);
+            grad.addColorStop(0, '#38bdf8');
+            grad.addColorStop(0.5, '#a855f7');
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, this.W, this.H);
+            ctx.restore();
+            ctx.fillStyle = 'rgba(56,189,248,0.5)';
+            ctx.font = '13px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('⬡ Start mining to activate 4D fractal', this.W/2, this.H/2);
+        }
+
+        renderMandelbulb() {
+            const W = this.W, H = this.H;
+            const imageData = this.ctx.createImageData(W, H);
+            const data = imageData.data;
+            const maxIter = this.maxIter;
+            const power = this.power;
+            const bailout = this.bailout;
+            const cycle = this.cycleCount;
+
+            for (let y = 0; y < H; y++) {
+                for (let x = 0; x < W; x++) {
+                    const cx = (x - W/2) / (W/2) * 1.6;
+                    const cy = (y - H/2) / (H/2) * 1.6;
+                    let zx = cx, zy = cy, zz = 0, zw = 0;
+                    let iter = 0;
+                    while (iter < maxIter) {
+                        const r = Math.sqrt(zx*zx + zy*zy + zz*zz + zw*zw);
+                        if (r > bailout || r < 1e-12) break;
+                        const rxy = Math.sqrt(zx*zx + zy*zy);
+                        const rxyz = Math.sqrt(rxy*rxy + zz*zz);
+                        const phi = Math.atan2(zy, zx);
+                        const theta = Math.atan2(zz, rxy);
+                        const psi = Math.atan2(zw, rxyz);
+                        const rN = Math.pow(r, power);
+                        zx = rN * Math.cos(psi*power) * Math.cos(theta*power) * Math.cos(phi*power) + cx;
+                        zy = rN * Math.cos(psi*power) * Math.cos(theta*power) * Math.sin(phi*power) + cy;
+                        zz = rN * Math.cos(psi*power) * Math.sin(theta*power);
+                        zw = rN * Math.sin(psi*power);
+                        iter++;
+                    }
+                    const idx = (y * W + x) * 4;
+                    if (iter === maxIter) {
+                        data[idx] = 8; data[idx+1] = 10; data[idx+2] = 28; data[idx+3] = 255;
+                    } else {
+                        const t = iter / maxIter;
+                        const hShift = (cycle * 15) % 360;
+                        const hue = (hShift + t * 280) / 360;
+                        const [r2,g2,b2] = this.hslToRgb(hue % 1, 0.85 + t*0.15, 0.15 + t*0.65);
+                        data[idx] = r2; data[idx+1] = g2; data[idx+2] = b2; data[idx+3] = 255;
+                    }
+                }
+            }
+            this.ctx.putImageData(imageData, 0, 0);
+        }
+
+        renderJulia() {
+            const W = this.W, H = this.H;
+            const imageData = this.ctx.createImageData(W, H);
+            const data = imageData.data;
+            const maxIter = this.maxIter;
+            const power = this.power;
+            const bailout = this.bailout;
+            const mu = this.mu;
+            const cycle = this.cycleCount;
+
+            // Morph Julia params gently with cycle
+            const mu0 = mu[0] + Math.sin(cycle * 0.12) * 0.08;
+            const mu1 = mu[1] + Math.cos(cycle * 0.09) * 0.06;
+            const mu2 = mu[2] + Math.sin(cycle * 0.15) * 0.04;
+            const mu3 = mu[3] + Math.cos(cycle * 0.07) * 0.05;
+
+            for (let y = 0; y < H; y++) {
+                for (let x = 0; x < W; x++) {
+                    const cx = (x - W/2) / (W/2) * 1.6;
+                    const cy = (y - H/2) / (H/2) * 1.6;
+                    let z = [cx, cy, 0, 0];
+                    let iter = 0;
+                    while (iter < maxIter) {
+                        const r = Math.sqrt(z[0]*z[0] + z[1]*z[1] + z[2]*z[2] + z[3]*z[3]);
+                        if (r > bailout || r < 1e-12) break;
+                        const rxy = Math.sqrt(z[0]*z[0] + z[1]*z[1]);
+                        const rxyz = Math.sqrt(rxy*rxy + z[2]*z[2]);
+                        const phi = Math.atan2(z[1], z[0]);
+                        const theta = Math.atan2(z[2], rxy);
+                        const psi = Math.atan2(z[3], rxyz);
+                        const rN = Math.pow(r, power);
+                        z = [
+                            rN*Math.cos(psi*power)*Math.cos(theta*power)*Math.cos(phi*power) + mu0,
+                            rN*Math.cos(psi*power)*Math.cos(theta*power)*Math.sin(phi*power) + mu1,
+                            rN*Math.cos(psi*power)*Math.sin(theta*power) + mu2,
+                            rN*Math.sin(psi*power) + mu3
+                        ];
+                        iter++;
+                    }
+                    const idx = (y * W + x) * 4;
+                    if (iter === maxIter) {
+                        data[idx] = 5; data[idx+1] = 8; data[idx+2] = 22; data[idx+3] = 255;
+                    } else {
+                        const t = iter / maxIter;
+                        const hShift = (cycle * 20 + 180) % 360;
+                        const hue = (hShift + t * 320) / 360;
+                        const [r2,g2,b2] = this.hslToRgb(hue % 1, 0.9, 0.1 + t*0.7);
+                        data[idx] = r2; data[idx+1] = g2; data[idx+2] = b2; data[idx+3] = 255;
+                    }
+                }
+            }
+            this.ctx.putImageData(imageData, 0, 0);
+        }
+
+        hslToRgb(h, s, l) {
+            let r, g, b;
+            if (s === 0) { r = g = b = l; }
+            else {
+                const q = l < 0.5 ? l*(1+s) : l+s-l*s;
+                const p = 2*l - q;
+                r = this.hue2rgb(p, q, h+1/3);
+                g = this.hue2rgb(p, q, h);
+                b = this.hue2rgb(p, q, h-1/3);
+            }
+            return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
+        }
+
+        hue2rgb(p, q, t) {
+            if (t < 0) t += 1; if (t > 1) t -= 1;
+            if (t < 1/6) return p+(q-p)*6*t;
+            if (t < 1/2) return q;
+            if (t < 2/3) return p+(q-p)*(2/3-t)*6;
+            return p;
+        }
+
+        step() {
+            this.cycleCount++;
+            const isMandelbulb = this.cycleCount % 2 === 1;
+            const badge = document.getElementById('fractalModeBadge');
+            const label = document.getElementById('fractalLabel');
+            badge.style.display = 'block';
+            if (isMandelbulb) {
+                badge.textContent = 'MANDELBULB';
+                badge.className = 'fractal-mode-badge mode-mandelbulb';
+                label.textContent = `⬡ 4D Mandelbulb · Power ${this.power} · Cycle ${this.cycleCount}`;
+                this.renderMandelbulb();
+            } else {
+                badge.textContent = 'JULIA 4D';
+                badge.className = 'fractal-mode-badge mode-julia';
+                label.textContent = `⬡ 4D Julia Set · Entanglement ${this.entanglement.toFixed(3)}`;
+                this.renderJulia();
+            }
+            // Update quantum stats
+            document.getElementById('qEntanglement').textContent = this.entanglement.toFixed(3);
+            document.getElementById('qError').textContent = this.errorRate.toFixed(4);
+            document.getElementById('qCycle').textContent = this.cycleCount;
+            if (this.onCycle) this.onCycle(this.cycleCount);
+        }
+
+        start() {
+            this.isActive = true;
+            this.scheduleNext();
+        }
+
+        scheduleNext() {
+            if (!this.isActive) return;
+            // Each fractal render takes a moment; use setTimeout to avoid blocking UI
+            setTimeout(() => {
+                if (!this.isActive) return;
+                this.step();
+                // Adaptive delay: slower at low cycles, faster as mining ramps up
+                const delay = Math.max(4000 - this.cycleCount * 80, 1800);
+                this.animFrameId = setTimeout(() => this.scheduleNext(), delay);
+            }, 50);
+        }
+
+        stop() {
+            this.isActive = false;
+            if (this.animFrameId) clearTimeout(this.animFrameId);
+            this.drawIdle();
+            document.getElementById('fractalModeBadge').style.display = 'none';
+            document.getElementById('fractalLabel').textContent = '⬡ Awaiting quantum ignition...';
+            document.getElementById('qEntanglement').textContent = '0.920';
+            document.getElementById('qError').textContent = '0.0180';
+            document.getElementById('qCycle').textContent = '0';
+        }
+
+        reset() {
+            this.stop();
+            this.cycleCount = 0;
+        }
+    }
+
+    // ─── CRYPTO MINER ────────────────────────────────────────────────────────────
+    class CryptoMiner {
+        constructor() {
+            this.balance = 0;
+            this.isMining = false;
+            this.miningStartTime = null;
+            this.miningInterval = null;
+            this.earnedToday = 0;
+            this.totalEarned = 0;
+            this.walletConnected = false;
+            this.walletAddress = null;
+            this.history = [];
+            this.hashRate = 0;
+            this.btcPrice = 85000;
+            this.tasks = this.initTasks();
+
+            this.fractal = new FractalEngine('fractalCanvas');
+            this.fractal.onCycle = (cycle) => {
+                // Each fractal cycle slightly boosts hash rate
+                this.hashRate = Math.floor(5 + cycle * 0.8 + Math.random() * 8);
+                document.getElementById('hashRate').textContent = `${this.hashRate} MH/s`;
+            };
+
+            this.loadData();
+            this.init();
+        }
+
+        initTasks() {
+            return [
+                { id: 'daily_login',   name: '🌅 Daily Login Bonus',       desc: 'Claim your daily login reward',          reward: 0.00000200, lastClaimed: 0, icon: '🌅' },
+                { id: 'mine_5min',     name: '⛏️ Mine for 5 Minutes',       desc: 'Keep mining active for 5 minutes',       reward: 0.00000150, lastClaimed: 0, icon: '⛏️' },
+                { id: 'community',     name: '🤝 Community Visit',          desc: 'Visit the community pool page',          reward: 0.00000100, lastClaimed: 0, icon: '🤝' },
+                { id: 'wallet_check',  name: '💼 Wallet Connected',         desc: 'Connect your wallet today',             reward: 0.00000120, lastClaimed: 0, icon: '💼' },
+                { id: 'fractal_watch', name: '🔮 Watch Fractal Cycle x5',   desc: 'Let 5 fractal cycles complete',          reward: 0.00000080, lastClaimed: 0, icon: '🔮' },
+            ];
+        }
+
+        init() {
+            this.setupEventListeners();
+            this.updateUI();
+            this.renderTasks();
+            this.createParticles();
+            this.updateBTCPrice();
+            this.startTaskTimers();
+        }
+
+        setupEventListeners() {
+            document.getElementById('miningBtn').addEventListener('click', () => this.toggleMining());
+            document.getElementById('connectBtn').addEventListener('click', () => this.connectWallet());
+            document.getElementById('maxBtn').addEventListener('click', () => this.setMaxWithdraw());
+            document.getElementById('withdrawBtn').addEventListener('click', () => this.withdraw());
+            document.getElementById('nowpaymentsBtn').addEventListener('click', () => this.openNOWPayments());
+            document.getElementById('coinbaseBtn').addEventListener('click', () => this.openCoinbase());
+            document.getElementById('walletconnectBtn').addEventListener('click', () => this.openWalletConnect());
+            document.getElementById('customAddressBtn').addEventListener('click', () => this.openCustomAddress());
+            document.getElementById('donateBtn').addEventListener('click', () => this.toggleDonationOptions());
+            document.querySelectorAll('.donation-amount-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    if (e.target.id === 'customDonationBtn') this.openCustomDonation();
+                    else this.processDonation(parseFloat(e.target.dataset.amount));
+                });
+            });
+        }
+
+        toggleMining() {
+            this.isMining ? this.stopMining() : this.startMining();
+        }
+
+        startMining() {
+            this.isMining = true;
+            this.miningStartTime = Date.now();
+            this.hashRate = Math.floor(5 + Math.random() * 8);
+
+            const btn = document.getElementById('miningBtn');
+            btn.textContent = 'Stop Mining';
+            btn.className = 'mining-btn active';
+
+            this.fractal.start();
+
+            this.miningInterval = setInterval(() => {
+                // Earnings scale gently with fractal cycle depth
+                const cycleMult = 1 + (this.fractal.cycleCount * 0.02);
+                const earnings = ((Math.random() * 0.00000006) + 0.00000002) * Math.min(cycleMult, 2.5);
+                this.balance += earnings;
+                this.earnedToday += earnings;
+                this.totalEarned += earnings;
+                this.updateUI();
+                this.saveData();
+                this.checkMiningTask();
+            }, 5000);
+
+            this.updateMiningTime();
+            this.showNotification('⚡ 4D Fractal mining ignited! Quantum cycles active...');
+        }
+
+        stopMining() {
+            this.isMining = false;
+            clearInterval(this.miningInterval);
+            this.fractal.stop();
+
+            const btn = document.getElementById('miningBtn');
+            btn.textContent = 'Start Mining';
+            btn.className = 'mining-btn inactive';
+
+            document.getElementById('hashRate').textContent = '0 MH/s';
+            this.showNotification('⛏️ Mining stopped');
+        }
+
+        updateMiningTime() {
+            if (!this.isMining) return;
+            const elapsed = Date.now() - this.miningStartTime;
+            const h = Math.floor(elapsed / 3600000);
+            const m = Math.floor((elapsed % 3600000) / 60000);
+            const s = Math.floor((elapsed % 60000) / 1000);
+            document.getElementById('miningTime').textContent =
+                `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+            // Auto-unlock mine_5min task after 5 minutes
+            if (elapsed >= 300000) {
+                const t = this.tasks.find(t => t.id === 'mine_5min');
+                if (t && !this.isTaskClaimedToday(t)) {
+                    t._unlocked = true;
+                    this.renderTasks();
+                }
+            }
+
+            setTimeout(() => this.updateMiningTime(), 1000);
+        }
+
+        checkMiningTask() {
+            if (this.fractal.cycleCount >= 5) {
+                const t = this.tasks.find(t => t.id === 'fractal_watch');
+                if (t && !this.isTaskClaimedToday(t)) {
+                    t._unlocked = true;
+                    this.renderTasks();
+                }
+            }
+        }
+
+        // ── TASKS ──────────────────────────────────────────────────────────────
+
+        isTaskClaimedToday(task) {
+            if (!task.lastClaimed) return false;
+            const last = new Date(task.lastClaimed);
+            const now = new Date();
+            return last.toDateString() === now.toDateString();
+        }
+
+        msUntilReset(task) {
+            if (!task.lastClaimed) return 0;
+            const next = new Date(task.lastClaimed);
+            next.setDate(next.getDate() + 1);
+            next.setHours(0,0,0,0);
+            return Math.max(0, next - Date.now());
+        }
+
+        claimTask(taskId) {
+            const task = this.tasks.find(t => t.id === taskId);
+            if (!task || this.isTaskClaimedToday(task)) return;
+
+            // Special unlock checks
+            if (taskId === 'wallet_check' && !this.walletConnected) {
+                this.showNotification('💼 Connect your wallet first to claim this task!');
+                return;
+            }
+            if (taskId === 'mine_5min' && !task._unlocked) {
+                this.showNotification('⛏️ Mine for 5 minutes first!');
+                return;
+            }
+            if (taskId === 'fractal_watch' && !task._unlocked) {
+                this.showNotification('🔮 Wait for 5 fractal cycles to complete!');
+                return;
+            }
+
+            task.lastClaimed = Date.now();
+            task._unlocked = false;
+            this.balance += task.reward;
+            this.earnedToday += task.reward;
+            this.totalEarned += task.reward;
+
+            this.history.unshift({
+                type: 'task',
+                amount: task.reward,
+                date: new Date().toISOString(),
+                name: task.name
+            });
+
+            this.updateUI();
+            this.saveData();
+            this.renderTasks();
+            this.showNotification(`🎉 Task claimed! +${task.reward.toFixed(8)} BTC`);
+        }
+
+        formatCountdown(ms) {
+            const h = Math.floor(ms / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        renderTasks() {
+            const list = document.getElementById('tasksList');
+            list.innerHTML = this.tasks.map(task => {
+                const claimed = this.isTaskClaimedToday(task);
+                const ms = this.msUntilReset(task);
+                let btnClass, btnText;
+                if (claimed) {
+                    btnClass = 'claimed'; btnText = '✓ Claimed';
+                } else if (task._unlocked || task.id === 'daily_login' || task.id === 'community') {
+                    btnClass = 'claimable'; btnText = 'Claim';
+                } else {
+                    btnClass = 'locked'; btnText = 'Locked';
+                }
+                return `
+                    <div class="task-item ${claimed ? 'completed' : ''}">
+                        <div class="task-info">
+                            <div class="task-name">${task.name}</div>
+                            <div class="task-reward">+${task.reward.toFixed(8)} BTC</div>
+                            ${claimed ? `<div class="task-timer">Resets in: <span class="task-countdown" data-id="${task.id}">${this.formatCountdown(ms)}</span></div>` : `<div class="task-timer">${task.desc}</div>`}
+                        </div>
+                        <button class="task-btn ${btnClass}" ${claimed || btnClass==='locked' ? (claimed ? 'disabled' : '') : ''} onclick="miner.claimTask('${task.id}')">${btnText}</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        startTaskTimers() {
+            setInterval(() => {
+                document.querySelectorAll('.task-countdown').forEach(el => {
+                    const id = el.dataset.id;
+                    const task = this.tasks.find(t => t.id === id);
+                    if (task) {
+                        const ms = this.msUntilReset(task);
+                        if (ms <= 0) {
+                            this.renderTasks();
+                        } else {
+                            el.textContent = this.formatCountdown(ms);
+                        }
+                    }
+                });
+            }, 1000);
+        }
+
+        // ── WALLET ─────────────────────────────────────────────────────────────
+
+        connectWallet() {
+            const addr = '0x' + Array.from({length:40}, () => Math.floor(Math.random()*16).toString(16)).join('');
+            this.walletAddress = addr;
+            this.walletConnected = true;
+            document.getElementById('walletStatus').innerHTML = `
+                <div class="wallet-info">
+                    <div class="wallet-label">Connected Wallet</div>
+                    <div class="wallet-address">${addr.slice(0,6)}...${addr.slice(-4)}</div>
+                </div>
+                <button class="disconnect-btn" onclick="miner.disconnectWallet()">Disconnect</button>
+            `;
+            document.getElementById('withdrawSection').style.display = 'grid';
+            const wt = this.tasks.find(t => t.id === 'wallet_check');
+            if (wt) { wt._unlocked = true; this.renderTasks(); }
+            this.showNotification('✅ Trust Wallet connected successfully!');
+            this.saveData();
+        }
+
+        disconnectWallet() {
+            this.walletConnected = false;
+            this.walletAddress = null;
+            document.getElementById('walletStatus').innerHTML = `
+                <div class="wallet-info">
+                    <div class="wallet-label">Wallet Status</div>
+                    <div class="wallet-address" id="walletAddress">Not Connected</div>
+                </div>
+                <button class="connect-btn" id="connectBtn">Connect Wallet</button>
+            `;
+            document.getElementById('connectBtn').addEventListener('click', () => this.connectWallet());
+            document.getElementById('withdrawSection').style.display = 'none';
+            this.showNotification('Wallet disconnected');
+            this.saveData();
+        }
+
+        setMaxWithdraw() { document.getElementById('withdrawAmount').value = this.balance.toFixed(8); }
+
+        withdraw() {
+            if (!this.walletConnected) { this.showNotification('Please connect your wallet first'); return; }
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            if (!amount || amount <= 0) { this.showNotification('Please enter a valid amount'); return; }
+            if (amount > this.balance) { this.showNotification('Insufficient balance'); return; }
+            this.balance -= amount;
+            this.history.unshift({ type:'withdraw', amount, date:new Date().toISOString(), address:this.walletAddress });
+            document.getElementById('withdrawAmount').value = '';
+            this.updateUI();
+            this.saveData();
+            this.showNotification(`✅ Withdrawn ${amount.toFixed(8)} BTC to Trust Wallet`);
+        }
+
+        // ── UI ─────────────────────────────────────────────────────────────────
+
+        updateUI() {
+            document.getElementById('totalBalance').textContent = this.balance.toFixed(8);
+            document.getElementById('balanceUsd').textContent = `≈ $${(this.balance * this.btcPrice).toFixed(2)} USD`;
+            document.getElementById('earnedToday').textContent = this.earnedToday.toFixed(8);
+            document.getElementById('totalEarned').textContent = this.totalEarned.toFixed(8);
+            this.updateHistory();
+        }
+
+        updateHistory() {
+            const list = document.getElementById('historyList');
+            if (!this.history.length) {
+                list.innerHTML = '<div class="empty-state"><p>No transactions yet. Start mining to earn crypto!</p></div>';
+                return;
+            }
+            list.innerHTML = this.history.slice(0,10).map(item => {
+                const icon = item.type==='withdraw' ? '📤 Withdrawal' : item.type==='task' ? '🎯 Task Reward' : item.type==='donation' ? '💝 Donation' : '⛏️ Mining';
+                return `
+                    <div class="history-item">
+                        <div>
+                            <div class="history-type">${icon}${item.name ? ' — '+item.name : ''}</div>
+                            <div class="history-date">${new Date(item.date).toLocaleString()}</div>
+                        </div>
+                        <div class="history-amount">${item.amount.toFixed(8)} BTC</div>
+                    </div>`;
+            }).join('');
+        }
+
+        async updateBTCPrice() {
+            this.btcPrice = 82000 + Math.random() * 8000;
+            this.updateUI();
+            setTimeout(() => this.updateBTCPrice(), 60000);
+        }
+
+        createParticles() {
+            const c = document.getElementById('particles');
+            for (let i=0; i<20; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random()*100+'%';
+                p.style.top = Math.random()*100+'%';
+                p.style.animationDelay = Math.random()*12+'s';
+                c.appendChild(p);
+            }
+        }
+
+        showNotification(msg) {
+            const n = document.getElementById('notification');
+            document.getElementById('notificationText').textContent = msg;
+            n.classList.add('show');
+            setTimeout(() => n.classList.remove('show'), 3500);
+        }
+
+        // ── PAYMENT MODALS ─────────────────────────────────────────────────────
+
+        openNOWPayments() {
+            document.getElementById('modalTitle').textContent = 'NOWPayments Withdrawal';
+            document.getElementById('modalBody').innerHTML = `
+                <div class="info-box"><p><strong>✅ Benefits:</strong> 200+ cryptocurrencies, instant payouts, low fees (0.5%)</p></div>
+                <div class="form-field"><label>Select Cryptocurrency</label>
+                    <select id="nowCrypto"><option value="btc">Bitcoin (BTC)</option><option value="eth">Ethereum (ETH)</option><option value="usdt">Tether (USDT)</option><option value="bnb">BNB</option><option value="ada">Cardano (ADA)</option></select></div>
+                <div class="form-field"><label>Your Wallet Address</label><input type="text" id="nowAddress" placeholder="Enter your wallet address"></div>
+                <div class="form-field"><label>Amount</label><input type="number" id="nowAmount" step="0.00000001" placeholder="0.00000000"></div>
+                <div class="warning-box"><p>⚠️ Redirects to NOWPayments for secure processing. Min $10 USD</p></div>
+                <button class="withdraw-btn" onclick="miner.processNOWPayments()">Continue to NOWPayments</button>`;
+            document.getElementById('withdrawalModal').classList.add('show');
+        }
+
+        processNOWPayments() {
+            const crypto = document.getElementById('nowCrypto').value;
+            const address = document.getElementById('nowAddress').value;
+            const amount = parseFloat(document.getElementById('nowAmount').value);
+            if (!address || !amount || amount<=0) { this.showNotification('❌ Please fill all fields'); return; }
+            if (amount > this.balance) { this.showNotification('❌ Insufficient balance'); return; }
+            this.showNotification(`🚀 Redirecting to NOWPayments for ${amount.toFixed(8)} ${crypto.toUpperCase()}...`);
+            this.closeModal();
+            setTimeout(() => window.open(`https://nowpayments.io/?crypto=${crypto}&amount=${amount}&address=${address}`, '_blank'), 1500);
+        }
+
+        openCoinbase() {
+            document.getElementById('modalTitle').textContent = 'Coinbase Commerce';
+            document.getElementById('modalBody').innerHTML = `
+                <div class="info-box"><p><strong>✅ Benefits:</strong> Trusted platform, verified transactions, BTC/ETH/USDC support</p></div>
+                <div class="form-field"><label>Amount (BTC)</label><input type="number" id="coinbaseAmount" step="0.00000001" placeholder="0.00000000"></div>
+                <div class="form-field"><label>Your Email</label><input type="email" id="coinbaseEmail" placeholder="your@email.com"></div>
+                <div class="warning-box"><p>⚠️ Coinbase will send a payment link. Fee: 1%</p></div>
+                <button class="withdraw-btn" onclick="miner.processCoinbase()">Generate Payment Link</button>`;
+            document.getElementById('withdrawalModal').classList.add('show');
+        }
+
+        processCoinbase() {
+            const amount = parseFloat(document.getElementById('coinbaseAmount').value);
+            const email = document.getElementById('coinbaseEmail').value;
+            if (!email || !amount || amount<=0) { this.showNotification('❌ Please fill all fields'); return; }
+            if (amount > this.balance) { this.showNotification('❌ Insufficient balance'); return; }
+            this.showNotification(`🏦 Creating Coinbase payment for ${amount.toFixed(8)} BTC...`);
+            this.closeModal();
+            setTimeout(() => window.open('https://commerce.coinbase.com/', '_blank'), 1500);
+        }
+
+        openWalletConnect() {
+            document.getElementById('modalTitle').textContent = 'WalletConnect Protocol';
+            document.getElementById('modalBody').innerHTML = `
+                <div class="info-box"><p><strong>✅</strong> Connect any Web3 wallet (MetaMask, Trust, Rainbow, etc.)</p></div>
+                <div style="text-align:center;padding:20px;">
+                    <div style="width:180px;height:180px;background:white;border-radius:12px;margin:0 auto 15px;display:flex;align-items:center;justify-content:center;font-size:55px;">📱</div>
+                    <p style="color:var(--color-text-secondary);font-size:13px;">QR Code will appear here<br>Scan with your wallet app</p>
+                </div>
+                <div class="warning-box"><p>⚠️ Make sure you have a Web3 wallet app installed</p></div>
+                <button class="withdraw-btn" onclick="miner.processWalletConnect()">Initialize WalletConnect</button>`;
+            document.getElementById('withdrawalModal').classList.add('show');
+        }
+
+        processWalletConnect() {
+            this.showNotification('🔗 WalletConnect requires backend integration.');
+            this.closeModal();
+        }
+
+        openCustomAddress() {
+            document.getElementById('modalTitle').textContent = 'Custom Wallet Address';
+            document.getElementById('modalBody').innerHTML = `
+                <div class="info-box"><p><strong>✅</strong> Withdraw to any wallet you own</p></div>
+                <div class="form-field"><label>Cryptocurrency</label>
+                    <select id="customCrypto"><option value="btc">Bitcoin (BTC)</option><option value="eth">Ethereum (ETH)</option></select></div>
+                <div class="form-field"><label>Wallet Address</label><input type="text" id="customAddress" placeholder="Enter BTC or ETH address"></div>
+                <div class="form-field"><label>Amount</label><input type="number" id="customAmount" step="0.00000001" placeholder="0.00000000"></div>
+                <div class="warning-box"><p>⚠️ Double-check your address! Transactions cannot be reversed.</p></div>
+                <button class="withdraw-btn" onclick="miner.processCustomAddress()">Request Withdrawal</button>`;
+            document.getElementById('withdrawalModal').classList.add('show');
+        }
+
+        processCustomAddress() {
+            const crypto = document.getElementById('customCrypto').value;
+            const address = document.getElementById('customAddress').value;
+            const amount = parseFloat(document.getElementById('customAmount').value);
+            if (!address || !amount || amount<=0) { this.showNotification('❌ Please fill all fields'); return; }
+            if (amount > this.balance) { this.showNotification('❌ Insufficient balance'); return; }
+            this.balance -= amount;
+            this.history.unshift({ type:'withdraw', amount, date:new Date().toISOString(), address, crypto:crypto.toUpperCase() });
+            this.updateUI(); this.saveData(); this.closeModal();
+            this.showNotification(`✅ Withdrawal submitted! ${amount.toFixed(8)} ${crypto.toUpperCase()} to ${address.slice(0,8)}...`);
+        }
+
+        openCustomDonation() {
+            document.getElementById('modalTitle').textContent = 'Custom Donation';
+            document.getElementById('modalBody').innerHTML = `
+                <div style="text-align:center;margin-bottom:20px;"><p style="font-size:40px;margin:0;">❤️</p><p style="color:var(--color-text-secondary);font-size:13px;margin:10px 0 0;">Thank you for supporting development!</p></div>
+                <div class="form-field"><label>Donation Amount (BTC)</label><input type="number" id="customDonationAmount" step="0.00000001" placeholder="0.00000000"></div>
+                <div class="form-field"><label>Your Name (Optional)</label><input type="text" id="donorName" placeholder="Anonymous"></div>
+                <div class="info-box"><p>💝 Donations fund: Better algorithms, More payment methods, Mobile app</p></div>
+                <button class="withdraw-btn" onclick="miner.processCustomDonationAmount()">Send Donation</button>`;
+            document.getElementById('withdrawalModal').classList.add('show');
+        }
+
+        processCustomDonationAmount() {
+            const amount = parseFloat(document.getElementById('customDonationAmount').value);
+            const name = document.getElementById('donorName').value || 'Anonymous';
+            if (!amount || amount<=0) { this.showNotification('❌ Please enter a valid amount'); return; }
+            this.processDonation(amount, name);
+        }
+
+        processDonation(amount, name='Anonymous') {
+            if (amount > this.balance) { this.showNotification('❌ Insufficient balance'); return; }
+            this.balance -= amount;
+            this.history.unshift({ type:'donation', amount, date:new Date().toISOString(), donor:name });
+            this.updateUI(); this.saveData(); this.closeModal();
+            this.showNotification(`💝 Thank you ${name}! Donated ${amount.toFixed(8)} BTC!`);
+        }
+
+        toggleDonationOptions() {
+            const o = document.getElementById('donationOptions');
+            o.style.display = o.style.display === 'none' ? 'block' : 'none';
+        }
+
+        closeModal() { document.getElementById('withdrawalModal').classList.remove('show'); }
+
+        // ── PERSISTENCE ────────────────────────────────────────────────────────
+
+        saveData() {
+            const data = {
+                balance: this.balance,
+                earnedToday: this.earnedToday,
+                totalEarned: this.totalEarned,
+                walletConnected: this.walletConnected,
+                walletAddress: this.walletAddress,
+                history: this.history,
+                tasks: this.tasks.map(t => ({ id:t.id, lastClaimed:t.lastClaimed }))
+            };
+            try {
+                const str = JSON.stringify(data);
+                const chunks = [];
+                for (let i=0; i<str.length; i+=1000) chunks.push(str.slice(i,i+1000));
+                sessionStorage.setItem('minerChunks', chunks.length.toString());
+                chunks.forEach((c,i) => sessionStorage.setItem(`minerData_${i}`, c));
+            } catch(e) {}
+        }
+
+        loadData() {
+            try {
+                const n = parseInt(sessionStorage.getItem('minerChunks') || '0');
+                if (!n) return;
+                let str = '';
+                for (let i=0; i<n; i++) str += sessionStorage.getItem(`minerData_${i}`) || '';
+                const data = JSON.parse(str);
+                this.balance = data.balance || 0;
+                this.earnedToday = data.earnedToday || 0;
+                this.totalEarned = data.totalEarned || 0;
+                this.walletConnected = data.walletConnected || false;
+                this.walletAddress = data.walletAddress || null;
+                this.history = data.history || [];
+                if (data.tasks) {
+                    data.tasks.forEach(saved => {
+                        const t = this.tasks.find(t => t.id === saved.id);
+                        if (t) t.lastClaimed = saved.lastClaimed || 0;
+                    });
+                }
+                if (this.walletConnected && this.walletAddress) {
+                    setTimeout(() => {
+                        document.getElementById('walletStatus').innerHTML = `
+                            <div class="wallet-info">
+                                <div class="wallet-label">Connected Wallet</div>
+                                <div class="wallet-address">${this.walletAddress.slice(0,6)}...${this.walletAddress.slice(-4)}</div>
+                            </div>
+                            <button class="disconnect-btn" onclick="miner.disconnectWallet()">Disconnect</button>`;
+                        document.getElementById('withdrawSection').style.display = 'grid';
+                    }, 100);
+                }
+            } catch(e) {}
+        }
+    }
+
+    const miner = new CryptoMiner();
+    </script>
+</body>
+</html>
